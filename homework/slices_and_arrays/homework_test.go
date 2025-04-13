@@ -17,13 +17,12 @@ type CircularQueue[T IntType] struct {
 	values []T
 	front  int
 	rear   int
+	size   int
 }
 
 func NewCircularQueue[T IntType](size int) CircularQueue[T] {
 	return CircularQueue[T]{
 		values: make([]T, size),
-		front:  -1,
-		rear:   -1,
 	}
 }
 
@@ -31,12 +30,9 @@ func (q *CircularQueue[T]) Push(value T) bool {
 	if q.Full() {
 		return false
 	}
-	if q.front == -1 {
-		q.front = 0
-	}
-	q.rear = (q.rear + 1) % len(q.values)
 	q.values[q.rear] = value
-
+	q.rear = (q.rear + 1) % len(q.values)
+	q.size++
 	return true
 }
 
@@ -44,13 +40,8 @@ func (q *CircularQueue[T]) Pop() bool {
 	if q.Empty() {
 		return false
 	}
-	if q.front == q.rear {
-		q.front = -1
-		q.rear = -1
-	} else {
-		q.front = (q.front + 1) % len(q.values)
-	}
-
+	q.front = (q.front + 1) % len(q.values)
+	q.size--
 	return true
 }
 
@@ -65,15 +56,15 @@ func (q *CircularQueue[T]) Back() T {
 	if q.Empty() {
 		return -1
 	}
-	return q.values[q.rear]
+	return q.values[(q.rear+q.size-1)%len(q.values)]
 }
 
 func (q *CircularQueue[T]) Empty() bool {
-	return q.front == -1
+	return q.size == 0
 }
 
 func (q *CircularQueue[T]) Full() bool {
-	return q.front == q.rear+1 || (q.front == 0 && q.rear == len(q.values)-1)
+	return q.size == len(q.values)
 }
 
 func TestCircularQueue(t *testing.T) {
