@@ -67,11 +67,15 @@ func (m *OrderedMap[T]) Erase(key T) {
 			node = node.right
 		}
 	}
-	if node == nil || lastNode == nil {
+	if node == nil {
 		return
 	}
 	m.size--
 	if node.right == nil {
+		if lastNode == nil {
+			m.root = node.left
+			return
+		}
 		if node == lastNode.left {
 			lastNode.left = node.left
 			return
