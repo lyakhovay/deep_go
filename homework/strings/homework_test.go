@@ -32,13 +32,8 @@ func (b *COWBuffer) Clone() COWBuffer {
 }
 
 func (b *COWBuffer) Close() {
-	if b.data == nil {
-		return
-	}
 	if b.refs != nil && *b.refs != 0 {
 		*b.refs--
-	} else {
-		b.data = nil
 	}
 }
 
@@ -50,7 +45,7 @@ func (b *COWBuffer) Update(index int, value byte) bool {
 		*b.refs--
 		dataCopy := make([]byte, len(b.data))
 		copy(dataCopy, b.data)
-		b.data = dataCopy
+		*b = NewCOWBuffer(dataCopy)
 	}
 	b.data[index] = value
 	return true
