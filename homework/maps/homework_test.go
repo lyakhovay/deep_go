@@ -26,91 +26,72 @@ func NewOrderedMap[T cmp.Ordered]() OrderedMap[T] {
 }
 
 func (m *OrderedMap[T]) Insert(key T, value any) {
-	node := m.root
-	var lastNode *Node[T]
-	for node != nil {
-		if node.key == key {
-			node.value = value
-		} else {
-			lastNode = node
-			if key < node.key {
-				node = node.left
-			} else {
-				node = node.right
-			}
-		}
+	m.root = m.insert(key, value, m.root)
+}
+
+func (m *OrderedMap[T]) insert(key T, value any, node *Node[T]) *Node[T] {
+	if node == nil {
+		m.size++
+		return &Node[T]{key: key, value: value}
 	}
-	newNode := Node[T]{key: key, value: value}
-	if lastNode == nil {
-		m.root = &newNode
-	} else {
-		if key < lastNode.key {
-			lastNode.left = &newNode
-		} else {
-			lastNode.right = &newNode
-		}
+	if key < node.key {
+		node.left = m.insert(key, value, node.left)
 	}
-	m.size++
+	if key > node.key {
+		node.right = m.insert(key, value, node.right)
+	}
+	node.value = value // key == node.key
+	return node
 }
 
 func (m *OrderedMap[T]) Erase(key T) {
-	node := m.root
-	var lastNode *Node[T]
-	for node != nil {
-		if node.key == key {
-			break
-		}
-		lastNode = node
-		if key < node.key {
-			node = node.left
-		} else {
-			node = node.right
-		}
-	}
+	m.root = m.erase(key, m.root)
+}
+
+func (m *OrderedMap[T]) erase(key T, node *Node[T]) *Node[T] {
 	if node == nil {
-		return
+		return nil
+	}
+	if key < node.key {
+		node.left = m.erase(key, node.left)
+		return node
+	}
+	if key > node.key {
+		node.right = m.erase(key, node.right)
+		return node
 	}
 	m.size--
+	if node.left == nil {
+		return node.right
+	}
 	if node.right == nil {
-		if lastNode == nil {
-			m.root = node.left
-			return
-		}
-		if node == lastNode.left {
-			lastNode.left = node.left
-			return
-		}
-		lastNode.right = node.left
-		return
+		return node.left
 	}
-	leftChild := node.right
-	var lastChild *Node[T]
-	for leftChild.left != nil {
-		lastChild = leftChild
-		leftChild = leftChild.left
+	lastChild := node.right
+	for lastChild.left != nil {
+		lastChild = lastChild.left
 	}
-	if lastChild != nil {
-		lastChild.left = leftChild.right
-	} else {
-		node.right = leftChild.right
-	}
-	node.key = leftChild.key
-	node.value = leftChild.value
+	lastChild.left = node.left
+	lastChild.right = node.right
+	node = lastChild
+	return node
 }
 
 func (m *OrderedMap[T]) Contains(key T) bool {
-	node := m.root
-	for node != nil {
-		if node.key == key {
-			return true
-		}
-		if key < node.key {
-			node = node.left
-		} else {
-			node = node.right
-		}
+	return contains(key, m.root)
+}
+
+func contains[T cmp.Ordered](key T, node *Node[T]) bool {
+	if node == nil {
+		return false
 	}
-	return false
+	if key < node.key {
+		return contains(key, node.left)
+	}
+	if key > node.key {
+		return contains(key, node.right)
+	}
+	return true // key == node.key
 }
 
 func (m *OrderedMap[T]) Size() int {
