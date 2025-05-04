@@ -119,13 +119,13 @@ const (
 )
 
 type GamePerson struct {
-	x, y, z           int32    // 12 B, mw: [* * * * * * * *] [* * * * _ _ _ _]
-	gold              uint32   // 4 B, mw: [* * * * * * * *] [* * * * * * * *]
-	manaHealth        [3]uint8 // 3 B, mw: [* * * * * * * *] [* * * * * * * *] [* * * _ _ _ _ _]
-	respectExperience uint8    // 1 B, mw: [* * * * * * * *] [* * * * * * * *] [* * * * _ _ _ _]
-	strengthLevel     uint8    // 1 B, mw: [* * * * * * * *] [* * * * * * * *] [* * * * * _ _ _]
-	name              [42]byte // 42 B, mw: [* * * * * * * *] x7 + [* * * * * * _ _]
-	typePropertyMask  uint8    // 1 B, mw: [* * * * * * * *] x8
+	x, y, z           int32
+	gold              uint32
+	manaHealth        [3]uint8
+	respectExperience uint8
+	strengthLevel     uint8
+	name              [42]byte
+	typePropertyMask  uint8
 }
 
 func NewGamePerson(options ...Option) GamePerson {
