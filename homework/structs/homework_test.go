@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"math"
 	"testing"
 	"unsafe"
@@ -205,6 +206,50 @@ func (p *GamePerson) Type() int {
 	return 0
 }
 
+type GamePersonForMarshal struct {
+	X          int    `json:"x"`
+	Y          int    `json:"y"`
+	Z          int    `json:"z"`
+	Name       string `json:"name"`
+	Gold       int    `json:"gold"`
+	Health     int    `json:"health"`
+	Respect    int    `json:"respect"`
+	Strength   int    `json:"strength"`
+	Experience int    `json:"experience"`
+	Level      int    `json:"level"`
+	HasHouse   bool   `json:"has_house"`
+	HasFamily  bool   `json:"has_family"`
+	HasGun     bool   `json:"has_gun"`
+	Type       string `json:"type"`
+}
+
+func (p *GamePerson) MarshalJSON() ([]byte, error) {
+	gp := GamePersonForMarshal{
+		X:          p.X(),
+		Y:          p.Y(),
+		Z:          p.Z(),
+		Name:       p.Name(),
+		Gold:       p.Gold(),
+		Health:     p.Health(),
+		Respect:    p.Respect(),
+		Strength:   p.Strength(),
+		Experience: p.Experience(),
+		Level:      p.Level(),
+		HasHouse:   p.HasHouse(),
+		HasFamily:  p.HasFamily(),
+		HasGun:     p.HasGun(),
+	}
+	switch p.Type() {
+	case BuilderGamePersonType:
+		gp.Type = "Builder"
+	case BlacksmithGamePersonType:
+		gp.Type = "Blacksmith"
+	case WarriorGamePersonType:
+		gp.Type = "Warrior"
+	}
+	return json.Marshal(gp)
+}
+
 func TestGamePerson(t *testing.T) {
 	assert.LessOrEqual(t, unsafe.Sizeof(GamePerson{}), uintptr(64))
 
@@ -250,4 +295,9 @@ func TestGamePerson(t *testing.T) {
 	assert.True(t, person.HasFamily())
 	assert.False(t, person.HasGun())
 	assert.Equal(t, personType, person.Type())
+	rawData, err := json.Marshal(&person)
+	assert.NoError(t, err)
+	assert.Equal(t,
+		string(rawData),
+		"{\"x\":-2147483648,\"y\":2147483647,\"z\":0,\"name\":\"aaaaaaaaaaaaa_bbbbbbbbbbbbb_cccccccccccccc\",\"gold\":2147483647,\"health\":1000,\"respect\":10,\"strength\":10,\"experience\":10,\"level\":10,\"has_house\":true,\"has_family\":true,\"has_gun\":false,\"type\":\"Builder\"}")
 }
