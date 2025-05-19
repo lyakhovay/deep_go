@@ -122,7 +122,7 @@ const (
 type GamePerson struct {
 	x, y, z           int32
 	gold              uint32
-	manaHealth        [3]uint8
+	manaHealth        [3]uint8 // byte2:[********] byte1: [****xxxx] byte0: [xxxxxxxx] -> x health, * mana
 	respectExperience uint8
 	strengthLevel     uint8
 	name              [42]byte
