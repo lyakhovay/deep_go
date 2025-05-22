@@ -32,8 +32,11 @@ func (e *MultiError) Error() string {
 func Append(err error, errs ...error) *MultiError {
 	merr, ok := err.(*MultiError)
 	if !ok {
-		merr = &MultiError{errs}
-		return merr
+		if err == nil {
+			merr = &MultiError{errors: errs}
+			return merr
+		}
+		merr = &MultiError{errors: []error{err}}
 	}
 	merr.errors = append(merr.errors, errs...)
 	return merr
