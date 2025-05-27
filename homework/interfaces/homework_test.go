@@ -31,16 +31,23 @@ func NewContainer() *Container {
 }
 
 func (c *Container) RegisterType(name string, constructor interface{}) {
-	c.dependencies[name] = constructor
+	switch fn := constructor.(type) {
+	case func() interface{}, interface{}:
+		c.dependencies[name] = fn
+	default:
+		panic(errors.New("unknown type of constructor"))
+	}
 }
 
 func (c *Container) RegisterSingletonType(name string, constructor interface{}) {
 	if _, ok := c.dependencies[name]; ok {
 		return
 	}
-	if fn, ok := constructor.(func() interface{}); ok {
-		c.dependencies[name] = fn()
+	fn, ok := constructor.(func() interface{})
+	if !ok {
+		panic(errors.New("unknown type of constructor"))
 	}
+	c.dependencies[name] = fn()
 }
 
 func (c *Container) Resolve(name string) (interface{}, error) {
@@ -51,10 +58,9 @@ func (c *Container) Resolve(name string) (interface{}, error) {
 	switch fn := constructor.(type) {
 	case func() interface{}:
 		return fn(), nil
-	case interface{}:
+	default: // Singleton or interface{}
 		return fn, nil
 	}
-	return nil, errors.New("unknown type of constructor")
 }
 
 func TestDIContainer(t *testing.T) {
