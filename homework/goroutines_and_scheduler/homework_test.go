@@ -11,71 +11,84 @@ type Task struct {
 	Priority   int
 }
 
-type Scheduler struct {
-	binaryHeap []Task
+type taskHeap struct {
+	tasks []*Task
 }
 
-func NewScheduler() Scheduler {
-	return Scheduler{}
+func (th *taskHeap) len() int {
+	return len(th.tasks)
 }
 
-func (s *Scheduler) len() int {
-	return len(s.binaryHeap)
+func (th *taskHeap) swap(a, b int) {
+	th.tasks[a], th.tasks[b] = th.tasks[b], th.tasks[a]
 }
 
-func (s *Scheduler) swap(a, b int) {
-	s.binaryHeap[a], s.binaryHeap[b] = s.binaryHeap[b], s.binaryHeap[a]
+func (th *taskHeap) pop() *Task {
+	task := th.tasks[0]
+	th.tasks = th.tasks[1:]
+	return task
 }
 
-func (s *Scheduler) isHigherPriority(a, b int) bool {
-	return s.binaryHeap[a].Priority > s.binaryHeap[b].Priority
+func (th *taskHeap) isHigherPriority(a, b int) bool {
+	return th.tasks[a].Priority > th.tasks[b].Priority
 }
 
-func (s *Scheduler) AddTask(task Task) {
-	s.binaryHeap = append(s.binaryHeap, task)
-	s.fixHeapAfterAdd(s.len() - 1)
-}
-
-func (s *Scheduler) fixHeapAfterAdd(index int) {
-	if index == 0 || s.isHigherPriority((index-1)/2, index) {
+func (th *taskHeap) fixHeapAfterAdd(index int) {
+	if index == 0 || th.isHigherPriority((index-1)/2, index) {
 		return
 	}
-	s.swap((index-1)/2, index)
-	s.fixHeapAfterAdd((index - 1) / 2)
+	th.swap((index-1)/2, index)
+	th.fixHeapAfterAdd((index - 1) / 2)
 }
 
-func (s *Scheduler) ChangeTaskPriority(taskID int, newPriority int) {
-	for i := range s.binaryHeap {
-		if s.binaryHeap[i].Identifier == taskID {
-			s.binaryHeap[i].Priority = newPriority
-			break
-		}
-	}
-	s.heapify(s.len() / 2)
-}
-
-func (s *Scheduler) heapify(index int) {
+func (th *taskHeap) heapify(index int) {
 	if index < 0 {
 		return
 	}
 	maxChild, leftChild, rightChild := index, index*2+1, index*2+2
-	if leftChild < s.len() && s.isHigherPriority(leftChild, maxChild) {
+	if leftChild < th.len() && th.isHigherPriority(leftChild, maxChild) {
 		maxChild = leftChild
 	}
-	if rightChild < s.len() && s.isHigherPriority(rightChild, maxChild) {
+	if rightChild < th.len() && th.isHigherPriority(rightChild, maxChild) {
 		maxChild = rightChild
 	}
 	if maxChild != index {
-		s.swap(maxChild, index)
+		th.swap(maxChild, index)
 	}
-	s.heapify(index - 1)
+	th.heapify(index - 1)
+}
+
+type Scheduler struct {
+	taskHeap
+	taskMap map[int]*Task
+}
+
+func NewScheduler() Scheduler {
+	return Scheduler{
+		taskMap: make(map[int]*Task),
+	}
+}
+
+func (s *Scheduler) AddTask(task Task) {
+	s.taskHeap.tasks = append(s.tasks, &task)
+	s.taskMap[task.Identifier] = &task
+	s.fixHeapAfterAdd(s.len() - 1)
+}
+
+func (s *Scheduler) ChangeTaskPriority(taskID int, newPriority int) {
+	task, ok := s.taskMap[taskID]
+	if !ok {
+		return
+	}
+	task.Priority = newPriority
+	s.heapify(s.len() / 2)
 }
 
 func (s *Scheduler) GetTask() Task {
-	task := s.binaryHeap[0]
-	s.binaryHeap = s.binaryHeap[1:]
+	task := s.taskHeap.pop()
+	delete(s.taskMap, task.Identifier)
 	s.heapify(0)
-	return task
+	return *task
 }
 
 func TestTrace(t *testing.T) {
